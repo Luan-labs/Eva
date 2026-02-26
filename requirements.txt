@@ -1,0 +1,7 @@
+flask==3.0.2
+requests==2.31.0
+werkzeug==3.0.1
+gunicorn==21.2.0
+pandas
+numpy
+anthropic==0.84.0  

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EVA</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#particles-js {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+header {
+    padding: 15px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+    background: rgba(30,41,59,0.8);
+    backdrop-filter: blur(10px);
+}
+
+#chat-box {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.message {
+    max-width: 80%;
+    padding: 12px 15px;
+    margin: 8px 0;
+    border-radius: 15px;
+    font-size: 15px;
+    line-height: 1.4;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.bot {
+    align-self: flex-start;
+    background: #1e293b;
+}
+
+#input-area {
+    display: flex;
+    padding: 10px;
+    background: rgba(30,41,59,0.95);
+    backdrop-filter: blur(10px);
+}
+
+#msg {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    font-size: 15px;
+    outline: none;
+}
+
+button {
+    margin-left: 8px;
+    padding: 12px 15px;
+    border-radius: 12px;
+    border: none;
+    background: #2563eb;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+#csvFile {
+    margin-right: 8px;
+}
+
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(5px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+</style>
+</head>
+
+<body>
+
+<div id="particles-js"></div>
+
+<header>
+EVA — Inteligência Artificial criada por Luan
+</header>
+
+<div id="chat-box"></div>
+
+<div id="input-area">
+<input type="file" id="csvFile" accept=".csv">
+<input id="msg" placeholder="Digite sua mensagem..." onkeypress="if(event.key==='Enter'){enviar()}">
+<button onclick="enviar()">Enviar</button>
+<a href="/logout"><button>Sair</button></a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+
+<script>
+particlesJS("particles-js", {
+  "particles": {
+    "number": { "value": 60 },
+    "color": { "value": "#3b82f6" },
+    "shape": { "type": "circle" },
+    "opacity": { "value": 0.5 },
+    "size": { "value": 3 },
+    "line_linked": {
+      "enable": true,
+      "distance": 140,
+      "color": "#3b82f6",
+      "opacity": 0.3,
+      "width": 1
+    },
+    "move": { "enable": true, "speed": 2 }
+  }
+});
+
+function adicionarMensagem(texto, classe) {
+    let div = document.createElement("div");
+    div.className = "message " + classe;
+    div.innerText = texto;
+    document.getElementById("chat-box").appendChild(div);
+    document.getElementById("chat-box").scrollTop = document.getElementById("chat-box").scrollHeight;
+}
+
+async function enviar() {
+
+    let mensagem = document.getElementById("msg").value;
+
+    if (!mensagem) return;
+
+    adicionarMensagem(mensagem, "user");
+    document.getElementById("msg").value = "";
+
+    let res = await fetch("/chat", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: mensagem })
+    });
+
+    let data = await res.json();
+
+    adicionarMensagem(data.response, "bot");
+}
+
+document.getElementById("csvFile").addEventListener("change", async function() {
+
+    let file = this.files[0];
+    if (!file) return;
+
+    let formData = new FormData();
+    formData.append("file", file);
+
+    adicionarMensagem("Enviando arquivo para análise...", "user");
+
+    let res = await fetch("/upload_csv", {
+        method: "POST",
+        body: formData
+    });
+
+    let data = await res.json();
+
+    adicionarMensagem(data.response, "bot");
+
+    this.value = "";
+});
+</script>
+
+</body>
+</html>
