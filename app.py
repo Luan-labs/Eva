@@ -2,6 +2,7 @@ import os
 import requests
 import pandas as pd
 import numpy as np
+import anthropic
 from flask import Flask, render_template, request, jsonify, redirect, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
