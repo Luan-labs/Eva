@@ -4,4 +4,4 @@ werkzeug==3.0.1
 gunicorn==21.2.0
 pandas
 numpy
-anthropic==0.84.0  
+anthropic
