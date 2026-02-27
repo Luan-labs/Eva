@@ -12,7 +12,6 @@ from werkzeug.utils import secure_filename
 # ===========================
 app = Flask(__name__)
 API_KEY = os.getenv("ANTHROPIC_API_KEY")
-client = anthropic.Anthropic(api_key=API_KEY)
 UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
