@@ -13,7 +13,7 @@ app = Flask(__name__)
 app.secret_key = "super_secret_key_eva_2026"
 
 # 🔴 COLOQUE SUA CHAVE AQUI
-ANTHROPIC_API_KEY = "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"
+ANTHROPIC_API_KEY = "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"
 
 UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
