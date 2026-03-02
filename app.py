@@ -16,7 +16,7 @@ load_dotenv()
 # CONFIGURAÇÃO DO APP
 # ===========================
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY")
+app.secret_key = os.getenv("SECRET_KEY", "super_secret_key_eva_2026")
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
