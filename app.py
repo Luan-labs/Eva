@@ -5,20 +5,22 @@ import numpy as np
 from flask import Flask, render_template, request, jsonify, redirect, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from dotenv import load_dotenv
-
-# ===========================
-# CARREGAR VARIÁVEIS DE AMBIENTE
-# ===========================
-load_dotenv()
 
 # ===========================
 # CONFIGURAÇÃO DO APP
 # ===========================
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "super_secret_key_eva_2026")
+
+# 🔐 Variáveis de ambiente (Render)
+app.secret_key = os.getenv("SECRET_KEY")
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+
+if not app.secret_key:
+    raise ValueError("SECRET_KEY não configurada!")
+
+if not ANTHROPIC_API_KEY:
+    raise ValueError("ANTHROPIC_API_KEY não configurada!")
 
 UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -32,9 +34,6 @@ usuarios = {}
 def perguntar_eva(mensagem):
     if "seu nome" in mensagem.lower():
         return "Eu sou Eva, uma inteligência artificial criada por Luan."
-
-    if not ANTHROPIC_API_KEY:
-        return "IA não configurada. Variável ANTHROPIC_API_KEY não encontrada."
 
     url = "https://api.anthropic.com/v1/messages"
 
@@ -62,9 +61,6 @@ Seja técnica, analítica e clara.""",
 
     try:
         response = requests.post(url, headers=headers, json=data, timeout=30)
-
-        print("STATUS:", response.status_code)
-        print("RESPOSTA:", response.text)
 
         if response.status_code != 200:
             return f"Erro API ({response.status_code}): {response.text}"
@@ -246,7 +242,7 @@ def logout():
 
 
 # ===========================
-# EXECUÇÃO
+# EXECUÇÃO LOCAL
 # ===========================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
