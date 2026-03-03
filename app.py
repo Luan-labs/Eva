@@ -7,13 +7,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
 # ===========================
-# CONFIGURAÇÃO DO APP
+# CONFIGURAÇÃO
 # ===========================
 app = Flask(__name__)
 
-# 🔐 Variáveis de ambiente (Render)
 app.secret_key = os.getenv("SECRET_KEY")
-
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
 if not app.secret_key:
@@ -29,11 +27,9 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 usuarios = {}
 
 # ===========================
-# FUNÇÃO EVA (IA)
+# IA EVA
 # ===========================
 def perguntar_eva(mensagem):
-    if "seu nome" in mensagem.lower():
-        return "Eu sou Eva, uma inteligência artificial criada por Luan."
 
     url = "https://api.anthropic.com/v1/messages"
 
@@ -46,34 +42,22 @@ def perguntar_eva(mensagem):
     data = {
         "model": "claude-3-haiku-20240307",
         "max_tokens": 300,
-        "system": """Você é Eva, uma IA analista científica criada por Luan.
-Nunca diga que é Claude ou que foi criada pela Anthropic.
-Seja técnica, analítica e clara.""",
+        "system": "Você é Eva, assistente analítica especializada em dados públicos e análise estatística.",
         "messages": [
             {
                 "role": "user",
-                "content": [
-                    {"type": "text", "text": mensagem}
-                ]
+                "content": [{"type": "text", "text": mensagem}]
             }
         ]
     }
 
     try:
         response = requests.post(url, headers=headers, json=data, timeout=30)
-
         if response.status_code != 200:
-            return f"Erro API ({response.status_code}): {response.text}"
-
-        resposta = response.json()
-
-        if "content" in resposta and len(resposta["content"]) > 0:
-            return resposta["content"][0]["text"]
-
-        return "Sem resposta da IA."
-
+            return f"Erro API ({response.status_code})"
+        return response.json()["content"][0]["text"]
     except Exception as e:
-        return f"Erro ao conectar com a IA: {str(e)}"
+        return f"Erro IA: {str(e)}"
 
 
 # ===========================
@@ -83,18 +67,7 @@ def zscore(a):
     a = np.array(a)
     return (a - a.mean()) / a.std(ddof=1)
 
-def ttest_ind(a, b):
-    a, b = np.array(a), np.array(b)
-    var_a = a.var(ddof=1)
-    var_b = b.var(ddof=1)
-    t_stat = (a.mean() - b.mean()) / np.sqrt(var_a/len(a) + var_b/len(b))
-    p_val = 2 * (1 - 0.5 * (1 + np.math.erf(np.abs(t_stat)/np.sqrt(2))))
-    return t_stat, p_val
 
-
-# ===========================
-# ANÁLISE DE DADOS
-# ===========================
 def interpretar_dados(df):
     comentarios = []
 
@@ -102,24 +75,105 @@ def interpretar_dados(df):
         media = df[coluna].mean()
         desvio = df[coluna].std()
 
-        comentarios.append(f"Coluna {coluna}: média {media:.2f}, desvio padrão {desvio:.2f}.")
+        comentarios.append(f"Coluna {coluna}: média {media:.2f}, desvio {desvio:.2f}.")
 
         if desvio > media * 0.5:
-            comentarios.append(f"A coluna {coluna} apresenta alta variabilidade.")
+            comentarios.append(f"Alta variabilidade detectada em {coluna}.")
 
         zs = zscore(df[coluna].dropna())
         outliers = np.sum(np.abs(zs) > 3)
 
         if outliers > 0:
-            comentarios.append(f"Foram detectados {outliers} possíveis outliers na coluna {coluna}.")
-
-    if len(df.select_dtypes(include=np.number).columns) > 1:
-        corr = df.corr().to_string()
-        comentarios.append("\nMatriz de correlação:\n" + corr)
+            comentarios.append(f"{outliers} possíveis outliers em {coluna}.")
 
     return "\n".join(comentarios)
 
 
+# ===========================
+# MÓDULO ANTICORRUPÇÃO
+# ===========================
+def detectar_concentracao(df):
+    if "Fornecedor" not in df.columns or "Valor" not in df.columns:
+        return 0, None
+
+    df["Valor"] = pd.to_numeric(df["Valor"], errors="coerce")
+    total = df["Valor"].sum()
+    grupo = df.groupby("Fornecedor")["Valor"].sum()
+
+    maior_valor = grupo.max()
+    maior_fornecedor = grupo.idxmax()
+
+    percentual = (maior_valor / total) * 100
+    return percentual, maior_fornecedor
+
+
+def detectar_fracionamento(df):
+    if "Valor" not in df.columns:
+        return 0
+
+    valores_repetidos = df["Valor"].value_counts()
+    suspeitos = valores_repetidos[valores_repetidos > 3]
+
+    return len(suspeitos)
+
+
+def detectar_excesso_dispensa(df):
+    if "Modalidade" not in df.columns:
+        return 0
+
+    total = len(df)
+    dispensas = df["Modalidade"].str.contains("Dispensa|Inexigibilidade", case=False, na=False).sum()
+    return (dispensas / total) * 100
+
+
+def calcular_indice_risco_corrupcao(df):
+
+    score = 0
+    motivos = []
+
+    # Concentração
+    percentual_conc, fornecedor = detectar_concentracao(df)
+    if percentual_conc > 50:
+        score += 30
+        motivos.append(f"Alta concentração: {percentual_conc:.1f}% com {fornecedor}.")
+
+    # Fracionamento
+    fracionamento = detectar_fracionamento(df)
+    if fracionamento > 0:
+        score += 20
+        motivos.append("Possível fracionamento detectado.")
+
+    # Dispensa excessiva
+    percentual_dispensa = detectar_excesso_dispensa(df)
+    if percentual_dispensa > 40:
+        score += 25
+        motivos.append(f"Alta taxa de dispensa/inexigibilidade: {percentual_dispensa:.1f}%.")
+
+    # Outliers
+    if "Valor" in df.columns:
+        df["Valor"] = pd.to_numeric(df["Valor"], errors="coerce")
+        zs = zscore(df["Valor"].dropna())
+        outliers = np.sum(np.abs(zs) > 3)
+
+        if outliers > 0:
+            score += 15
+            motivos.append(f"{outliers} valores atípicos detectados.")
+
+    score = min(score, 100)
+
+    if score <= 30:
+        classificacao = "Baixo Risco"
+    elif score <= 60:
+        classificacao = "Risco Moderado"
+    else:
+        classificacao = "Alto Risco"
+
+    return score, classificacao, motivos
+
+
+# ===========================
+# CSV
+# ===========================
 def analisar_csv(caminho):
     df = pd.read_csv(caminho)
     session["ultimo_csv"] = caminho
@@ -127,45 +181,34 @@ def analisar_csv(caminho):
     resumo = df.describe().to_string()
     comentario = interpretar_dados(df)
 
+    score, classificacao, motivos = calcular_indice_risco_corrupcao(df)
+
+    relatorio_risco = f"""
+===== ANÁLISE DE RISCO ANTICORRUPÇÃO =====
+
+Índice Composto de Risco: {score}/100
+Classificação: {classificacao}
+
+Fatores Identificados:
+{chr(10).join(motivos)}
+
+Observação:
+Esta análise identifica padrões estatísticos.
+Não constitui acusação formal.
+Recomenda-se auditoria técnica complementar.
+"""
+
     return f"""
 Arquivo analisado com sucesso.
 
 Resumo estatístico:
 {resumo}
 
-Análise detalhada:
+Análise estatística:
 {comentario}
+
+{relatorio_risco}
 """
-
-
-def comparar_csv(caminho1, caminho2):
-    df1 = pd.read_csv(caminho1)
-    df2 = pd.read_csv(caminho2)
-
-    colunas_comuns = list(set(df1.columns) & set(df2.columns))
-    resultado = []
-
-    for coluna in colunas_comuns:
-        if df1[coluna].dtype in [np.float64, np.int64]:
-            media1 = df1[coluna].mean()
-            media2 = df2[coluna].mean()
-
-            t_stat, p_val = ttest_ind(df1[coluna].dropna(), df2[coluna].dropna())
-
-            resultado.append(f"""
-Coluna: {coluna}
-Média Arquivo 1: {media1:.2f}
-Média Arquivo 2: {media2:.2f}
-Teste t: t = {t_stat:.2f}
-p-valor = {p_val:.4f}
-""")
-
-            if p_val < 0.05:
-                resultado.append("Diferença estatisticamente significativa (p < 0.05).")
-            else:
-                resultado.append("Não há diferença estatisticamente significativa.")
-
-    return "\n".join(resultado)
 
 
 # ===========================
@@ -215,6 +258,7 @@ def chat():
 
 @app.route("/upload_csv", methods=["POST"])
 def upload_csv():
+
     if "file" not in request.files:
         return jsonify({"response": "Nenhum arquivo enviado."})
 
@@ -223,26 +267,19 @@ def upload_csv():
     caminho = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(caminho)
 
-    if "ultimo_csv" in session:
-        anterior = session["ultimo_csv"]
-        comparacao = comparar_csv(anterior, caminho)
-        session["ultimo_csv"] = caminho
+    resultado = analisar_csv(caminho)
 
-        return jsonify({"response": f"Novo arquivo recebido.\n\nComparação:\n{comparacao}"})
-    else:
-        resultado = analisar_csv(caminho)
-        return jsonify({"response": resultado})
+    return jsonify({"response": resultado})
 
 
 @app.route("/logout")
 def logout():
-    session.pop("usuario", None)
-    session.pop("ultimo_csv", None)
+    session.clear()
     return redirect("/login")
 
 
 # ===========================
-# EXECUÇÃO LOCAL
+# EXECUÇÃO
 # ===========================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
