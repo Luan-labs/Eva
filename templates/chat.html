@@ -1,200 +1,204 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EVA</title>
+    <title>EVA Transparência</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-* {
-    box-sizing: border-box;
-}
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
 
-body {
-    margin: 0;
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: #0f172a;
-    color: white;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
+        header {
+            background: #0d6efd;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
 
-#particles-js {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-}
+        #chat-box {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
 
-header {
-    padding: 15px;
-    text-align: center;
-    font-size: 20px;
-    font-weight: 600;
-    background: rgba(30,41,59,0.8);
-    backdrop-filter: blur(10px);
-}
+        .message {
+            margin-bottom: 10px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 75%;
+            word-wrap: break-word;
+        }
 
-#chat-box {
-    flex: 1;
-    overflow-y: auto;
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-}
+        .user {
+            background: #0d6efd;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
 
-.message {
-    max-width: 80%;
-    padding: 12px 15px;
-    margin: 8px 0;
-    border-radius: 15px;
-    font-size: 15px;
-    line-height: 1.4;
-    animation: fadeIn 0.2s ease-in-out;
-}
+        .bot {
+            background: #e9ecef;
+            color: black;
+            align-self: flex-start;
+        }
 
-.user {
-    align-self: flex-end;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-}
+        .input-area {
+            display: flex;
+            padding: 10px;
+            background: white;
+            border-top: 1px solid #ddd;
+        }
 
-.bot {
-    align-self: flex-start;
-    background: #1e293b;
-}
+        #message {
+            flex: 1;
+            padding: 12px;
+            border-radius: 25px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            outline: none;
+        }
 
-#input-area {
-    display: flex;
-    padding: 10px;
-    background: rgba(30,41,59,0.95);
-    backdrop-filter: blur(10px);
-}
+        .btn {
+            margin-left: 8px;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            font-size: 18px;
+            color: white;
+        }
 
-#msg {
-    flex: 1;
-    padding: 12px;
-    border-radius: 12px;
-    border: none;
-    font-size: 15px;
-    outline: none;
-}
+        .send-btn {
+            background: #0d6efd;
+        }
 
-button {
-    margin-left: 8px;
-    padding: 12px 15px;
-    border-radius: 12px;
-    border: none;
-    background: #2563eb;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s;
-}
+        .audio-btn {
+            background: #198754;
+        }
 
-button:hover {
-    transform: scale(1.05);
-}
+        .btn:hover {
+            opacity: 0.85;
+        }
 
-#csvFile {
-    margin-right: 8px;
-}
+        .upload-area {
+            padding: 10px;
+            background: #f8f9fa;
+            text-align: center;
+            border-top: 1px solid #ddd;
+        }
 
-@keyframes fadeIn {
-    from {opacity: 0; transform: translateY(5px);}
-    to {opacity: 1; transform: translateY(0);}
-}
-</style>
+    </style>
 </head>
-
 <body>
 
-<div id="particles-js"></div>
-
 <header>
-EVA — Inteligência Artificial criada por Luan
+    EVA Transparência
 </header>
 
 <div id="chat-box"></div>
 
-<div id="input-area">
-<input type="file" id="csvFile" accept=".csv">
-<input id="msg" placeholder="Digite sua mensagem..." onkeypress="if(event.key==='Enter'){enviar()}">
-<button onclick="enviar()">Enviar</button>
-<a href="/logout"><button>Sair</button></a>
+<div class="input-area">
+    <input type="text" id="message" placeholder="Digite sua mensagem..." />
+    <button class="btn audio-btn" onclick="startListening()">🎤</button>
+    <button class="btn send-btn" onclick="sendMessage()">➤</button>
 </div>
 
-<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+<div class="upload-area">
+    <form id="csvForm">
+        <input type="file" id="csvFile" accept=".csv">
+        <button type="submit">Analisar CSV</button>
+    </form>
+</div>
 
 <script>
-particlesJS("particles-js", {
-  "particles": {
-    "number": { "value": 60 },
-    "color": { "value": "#3b82f6" },
-    "shape": { "type": "circle" },
-    "opacity": { "value": 0.5 },
-    "size": { "value": 3 },
-    "line_linked": {
-      "enable": true,
-      "distance": 140,
-      "color": "#3b82f6",
-      "opacity": 0.3,
-      "width": 1
-    },
-    "move": { "enable": true, "speed": 2 }
-  }
-});
+    const chatBox = document.getElementById("chat-box");
 
-function adicionarMensagem(texto, classe) {
-    let div = document.createElement("div");
-    div.className = "message " + classe;
-    div.innerText = texto;
-    document.getElementById("chat-box").appendChild(div);
-    document.getElementById("chat-box").scrollTop = document.getElementById("chat-box").scrollHeight;
-}
+    function appendMessage(text, sender) {
+        const div = document.createElement("div");
+        div.classList.add("message", sender);
+        div.innerText = text;
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
 
-async function enviar() {
+    function sendMessage() {
+        const input = document.getElementById("message");
+        const text = input.value.trim();
 
-    let mensagem = document.getElementById("msg").value;
+        if (!text) return;
 
-    if (!mensagem) return;
+        appendMessage(text, "user");
+        input.value = "";
 
-    adicionarMensagem(mensagem, "user");
-    document.getElementById("msg").value = "";
+        fetch("/chat", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({message: text})
+        })
+        .then(res => res.json())
+        .then(data => {
+            appendMessage(data.response, "bot");
+        });
+    }
 
-    let res = await fetch("/chat", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ message: mensagem })
+    document.getElementById("message").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+            sendMessage();
+        }
     });
 
-    let data = await res.json();
+    // =========================
+    // ENVIO DE ÁUDIO
+    // =========================
+    function startListening() {
+        if (!('webkitSpeechRecognition' in window)) {
+            alert("Seu navegador não suporta reconhecimento de voz.");
+            return;
+        }
 
-    adicionarMensagem(data.response, "bot");
-}
+        const recognition = new webkitSpeechRecognition();
+        recognition.lang = "pt-BR";
+        recognition.start();
 
-document.getElementById("csvFile").addEventListener("change", async function() {
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            document.getElementById("message").value = transcript;
+        };
+    }
 
-    let file = this.files[0];
-    if (!file) return;
+    // =========================
+    // UPLOAD CSV
+    // =========================
+    document.getElementById("csvForm").addEventListener("submit", function(e){
+        e.preventDefault();
 
-    let formData = new FormData();
-    formData.append("file", file);
+        const fileInput = document.getElementById("csvFile");
+        const file = fileInput.files[0];
 
-    adicionarMensagem("Enviando arquivo para análise...", "user");
+        if (!file) return;
 
-    let res = await fetch("/upload_csv", {
-        method: "POST",
-        body: formData
+        const formData = new FormData();
+        formData.append("file", file);
+
+        fetch("/upload_csv", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            appendMessage(data.response, "bot");
+        });
     });
 
-    let data = await res.json();
-
-    adicionarMensagem(data.response, "bot");
-
-    this.value = "";
-});
 </script>
 
 </body>
