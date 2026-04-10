@@ -1,7 +1,4 @@
-flask==3.0.2
-requests==2.31.0
-werkzeug==3.0.1
+Flask==2.3.3
 gunicorn==21.2.0
-pandas
-numpy
-anthropic
+requests==2.31.0
+biopython==1.83
