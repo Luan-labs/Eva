@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Eva Lab 🧬</title>
+
+<style>
+body{margin:0;background:#05080f;color:white;font-family:'Segoe UI';}
+.main{display:flex;height:100vh;}
+
+.sidebar{
+    width:220px;
+    background:#0b0f1a;
+    padding:20px;
+}
+
+.sidebar button{
+    width:100%;
+    margin:10px 0;
+    padding:10px;
+    background:#ff4da6;
+    color:white;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+.content{flex:1;display:flex;flex-direction:column;}
+
+.chat-header{padding:15px;background:#0b0f1a;}
+
+#chat-history{
+    flex:1;
+    overflow-y:auto;
+    padding:20px;
+}
+
+.msg{
+    padding:10px;
+    border-radius:15px;
+    max-width:70%;
+    margin-bottom:10px;
+}
+
+.user{background:#ff4da6;margin-left:auto;}
+.bot{background:#1a1f2e;}
+
+.chat-input{
+    display:flex;
+    padding:15px;
+    background:#0b0f1a;
+}
+
+.chat-input input{
+    flex:1;
+    padding:10px;
+    border-radius:20px;
+    border:none;
+}
+
+.chat-input button{
+    margin-left:10px;
+    padding:10px;
+    border-radius:20px;
+    border:none;
+    background:#ff4da6;
+    color:white;
+}
+
+.hidden{display:none;}
+
+#viewer{width:100%;height:300px;}
+#protein-viewer{width:100%;height:400px;background:black;margin-top:20px;}
+
+textarea{
+    width:100%;
+    height:80px;
+    margin-top:10px;
+    border-radius:10px;
+    padding:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="main">
+
+<div class="sidebar">
+<h2>Eva Lab</h2>
+<button onclick="toggleDNA()">DNA Tools</button>
+<button onclick="clearChat()">Limpar</button>
+</div>
+
+<div class="content">
+
+<div class="chat-header">Eve IA</div>
+
+<div id="chat-history"></div>
+
+<div id="dna-panel" class="hidden">
+
+<textarea id="dna-seq" placeholder="Digite DNA ou RNA"></textarea>
+
+<button onclick="gc()">GC%</button>
+<button onclick="toRNA()">DNA → RNA</button>
+<button onclick="translate()">RNA → Proteína</button>
+<button onclick="renderDNA()">DNA 3D</button>
+
+<pre id="dna-result"></pre>
+
+<div id="viewer"></div>
+<div id="protein-viewer"></div>
+
+</div>
+
+<div class="chat-input">
+<input id="msg" placeholder="Digite..." />
+<button onclick="send()">Enviar</button>
+</div>
+
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/ngl@latest/dist/ngl.js"></script>
+<script src="/static/chat.js"></script>
+
+</body>
+</html>
