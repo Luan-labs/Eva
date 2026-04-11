@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Eva-Núcleo 🧬</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    font-family:'Segoe UI';
+    background:#05080f;
+}
+
+/* CANVAS FUNDO */
+canvas{
+    position:fixed;
+    top:0;
+    left:0;
+    z-index:-1;
+}
+
+/* CONTAINER */
+.container{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+/* LOGIN BOX */
+.login-box{
+    width:450px;
+    padding:50px;
+    border-radius:30px;
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(20px);
+    box-shadow:0 0 60px rgba(255,77,166,0.4);
+    text-align:center;
+    animation:fadeIn 1s ease;
+}
+
+/* TITULO */
+.login-box h2{
+    color:#ff4da6;
+    font-size:28px;
+    margin-bottom:20px;
+}
+
+/* INPUT */
+input{
+    width:100%;
+    padding:14px;
+    margin:12px 0;
+    border:none;
+    border-radius:20px;
+    background:rgba(255,255,255,0.08);
+    color:white;
+    outline:none;
+    font-size:15px;
+}
+
+/* BOTÃO */
+button{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:25px;
+    background:#ff4da6;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    background:#ff1a75;
+    transform:scale(1.05);
+}
+
+/* ERRO */
+.error{
+    color:#ff6b6b;
+    margin-top:10px;
+}
+
+/* ANIMAÇÕES */
+@keyframes fadeIn{
+    from{opacity:0; transform:translateY(30px);}
+    to{opacity:1; transform:translateY(0);}
+}
+
+/* LOADING */
+.loading{
+    display:none;
+    margin-top:15px;
+    color:#ff4da6;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="bg"></canvas>
+
+<div class="container">
+<div class="login-box">
+
+<h2>Eva-Núcleo 🧬</h2>
+
+<form method="POST" onsubmit="showLoading()">
+<input name="username" placeholder="Usuário">
+<input name="password" type="password" placeholder="Senha">
+<button>Entrar</button>
+</form>
+
+<div class="loading" id="loading">🔬 Autenticando...</div>
+
+<p class="error">{{ erro }}</p>
+
+</div>
+</div>
+
+<script>
+// ================= DNA + PARTÍCULAS =================
+const canvas = document.getElementById('bg');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let helices = [];
+let particles = [];
+
+// CRIAR HÉLICES
+for(let i=0;i<25;i++){
+    helices.push({
+        x: Math.random()*canvas.width,
+        y: Math.random()*canvas.height,
+        angle: Math.random()*Math.PI*2,
+        speed: 0.01 + Math.random()*0.02
+    });
+}
+
+// CRIAR PARTÍCULAS
+for(let i=0;i<120;i++){
+    particles.push({
+        x: Math.random()*canvas.width,
+        y: Math.random()*canvas.height,
+        r: Math.random()*2+1,
+        dx:(Math.random()-0.5)*0.5,
+        dy:(Math.random()-0.5)*0.5
+    });
+}
+
+function animate(){
+    ctx.fillStyle="rgba(5,8,15,0.2)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // PARTÍCULAS
+    particles.forEach(p=>{
+        p.x+=p.dx;
+        p.y+=p.dy;
+
+        ctx.beginPath();
+        ctx.fillStyle="#ff4da6";
+        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fill();
+    });
+
+    // DNA
+    helices.forEach(h=>{
+        h.angle += h.speed;
+
+        let y1 = h.y + Math.sin(h.angle)*30;
+        let y2 = h.y + Math.sin(h.angle+Math.PI)*30;
+
+        ctx.strokeStyle="#ff4da6";
+        ctx.beginPath();
+        ctx.moveTo(h.x,y1);
+        ctx.lineTo(h.x,y2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.fillStyle="#ffb6c1";
+        ctx.arc(h.x,y1,4,0,Math.PI*2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(h.x,y2,4,0,Math.PI*2);
+        ctx.fill();
+    });
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+
+// LOADING LOGIN
+function showLoading(){
+    document.getElementById("loading").style.display="block";
+}
+
+// RESPONSIVO
+window.addEventListener("resize",()=>{
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});
+</script>
+
+</body>
+</html>
